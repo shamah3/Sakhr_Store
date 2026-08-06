@@ -137,7 +137,7 @@
                                                 <h3 class="text-2xl font-black text-brand-blue-900 mb-2">تعيين كلمة سر جديدة</h3>
                                                 <p class="text-sm text-gray-500 mb-10 leading-relaxed font-medium">أنت بصدد تغيير كلمة سر حساب العميل: <span class="font-black text-brand-blue underline decoration-brand-blue/30">{{ $user->name }}</span>.</p>
                                                 
-                                                <form action="{{ route('users.resetPassword', $user) }}" method="POST" class="space-y-8">
+                                                <form action="{{ route('admin.users.resetPassword', $user) }}" method="POST" class="space-y-8">
                                                     @csrf
                                                     <div class="space-y-3">
                                                         <label class="block text-xs font-black text-gray-700 uppercase tracking-widest mr-1">كلمة السر الجديدة:</label>

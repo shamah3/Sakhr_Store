@@ -18,7 +18,7 @@ class BaseController extends Controller
     public function sendResponse($result, $message, $code = 200): JsonResponse
     {
         $response = [
-            'status' => true,
+            'success' => true,
             'message' => $message,
             'data'    => $result,
         ];
@@ -37,7 +37,7 @@ class BaseController extends Controller
     public function sendError($error, $errorMessages = [], $code = 404): JsonResponse
     {
         $response = [
-            'status' => false,
+            'success' => false,
             'message' => $error,
         ];
 

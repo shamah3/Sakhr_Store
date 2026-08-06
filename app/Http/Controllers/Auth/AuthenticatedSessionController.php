@@ -51,14 +51,15 @@ class AuthenticatedSessionController extends Controller
         }
 
         $request->session()->regenerate();
+        $user = $request->user();
 
-        // توجيه المستخدم حسب الصلاحية
-        if ($request->user()->hasRole('super-admin')) {
-            return redirect()->intended(route('admin.dashboard'));
+        // توجيه المستخدم حسب الصلاحية - تم التعديل لتجنب الروابط العالقة
+        if ($user->hasRole('super-admin')) {
+            return redirect()->route('admin.dashboard');
         }
 
-        if ($request->user()->hasRole('vendor')) {
-            return redirect()->intended(route('vendor.dashboard'));
+        if ($user->hasRole('vendor')) {
+            return redirect()->route('vendor.dashboard');
         }
 
         return redirect()->intended('/');

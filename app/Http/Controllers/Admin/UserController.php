@@ -13,10 +13,7 @@ class UserController extends Controller
 {
     public function index(): View
     {
-        $usersQuery = User::query();
-        $usersQuery->whereDoesntHave('roles', function ($query) {
-            $query->whereIn('name', ['super-admin', 'vendor']);
-        });
+        $usersQuery = User::role('customer');
 
         if (request()->filled('search')) {
             $searchTerm = request('search');

@@ -16,4 +16,6 @@ return [
         'limit' => (int) env('FLOOSAK_RECONCILE_LIMIT', 100),
         'max_attempts' => (int) env('FLOOSAK_RECONCILE_MAX_ATTEMPTS', 12),
     ],
+
+    'bypass' => env('FLOOSAK_BYPASS', false),
 ];

@@ -64,6 +64,7 @@ class TopProductsController extends Controller
                 'products.three_sixty_images',
                 'products.store_id',
                 'products.category_id',
+                'products.category',
                 'products.manual_category',
                 'products.created_at',
                 'products.updated_at',

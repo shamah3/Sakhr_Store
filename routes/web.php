@@ -45,6 +45,17 @@ Route::middleware('auth')->group(function () {
     Route::get('/profile', [ProfileController::class, 'edit'])->name('profile.edit');
     Route::patch('/profile', [ProfileController::class, 'update'])->name('profile.update');
     Route::delete('/profile', [ProfileController::class, 'destroy'])->name('profile.destroy');
+
+    // مسار لوحة التحكم العام الذي يوجه المستخدم حسب صلاحياته
+    Route::get('/dashboard', function () {
+        $user = auth()->user();
+        if ($user->hasRole('super-admin')) {
+            return redirect()->route('admin.dashboard');
+        } elseif ($user->hasRole('vendor')) {
+            return redirect()->route('vendor.dashboard');
+        }
+        return redirect('/');
+    })->name('dashboard');
 });
 
 // ==================== Admin Routes ====================

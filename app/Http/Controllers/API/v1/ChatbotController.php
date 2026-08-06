@@ -11,15 +11,26 @@ use Illuminate\Support\Facades\Validator;
 class ChatbotController extends BaseController
 {
 
-    /**
-     * Get all active chatbot rules.
-     *
-     * @return JsonResponse
-     */
     public function rules(): JsonResponse
     {
         $rules = ChatbotRule::all();
         return $this->sendResponse($rules, 'تم جلب قواعد الشات بوت بنجاح');
+    }
+
+    /**
+     * Get chatbot history for the authenticated user.
+     *
+     * @param Request $request
+     * @return JsonResponse
+     */
+    public function history(Request $request): JsonResponse
+    {
+        $userId = $request->user()->id;
+        $history = ChatbotResponse::where('user_id', $userId)
+            ->orderBy('created_at', 'asc')
+            ->get();
+        
+        return $this->sendResponse($history, 'تم جلب سجل المحادثات بنجاح');
     }
 
     /**

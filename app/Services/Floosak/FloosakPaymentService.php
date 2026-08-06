@@ -18,6 +18,36 @@ class FloosakPaymentService
 
     public function initiate(Order $order, User $user): FloosakPaymentAttempt
     {
+        if (config('floosak.bypass', false)) {
+            return DB::transaction(function () use ($order, $user): FloosakPaymentAttempt {
+                $existing = FloosakPaymentAttempt::query()
+                    ->where('order_id', $order->id)
+                    ->where('user_id', $user->id)
+                    ->latest()
+                    ->first();
+
+                if ($existing && $existing->status === FloosakPaymentAttempt::STATUS_COMPLETED) {
+                    return $existing;
+                }
+
+                $attempt = FloosakPaymentAttempt::create([
+                    'order_id' => $order->id,
+                    'user_id' => $user->id,
+                    'request_id' => (string) Str::uuid(),
+                    'gateway_transaction_id' => 'BYPASS-' . strtoupper(Str::random(12)),
+                    'gateway_status_en' => 'Completed',
+                    'gateway_status_ar' => 'مكتمل (تجاوز)',
+                    'amount' => $order->total_amount,
+                    'status' => FloosakPaymentAttempt::STATUS_COMPLETED,
+                    'completed_at' => now(),
+                ]);
+
+                $this->markOrderPaid($attempt);
+
+                return $attempt;
+            });
+        }
+
         $this->ensureConfigured();
 
         if ((int) $order->user_id !== (int) $user->id) {
@@ -80,11 +110,29 @@ class FloosakPaymentService
             return $attempt->fresh();
         }
 
+
+
         return $this->sendAttempt($attempt);
     }
 
     public function confirm(FloosakPaymentAttempt $attempt, User $user, string $otp): FloosakPaymentAttempt
     {
+        if (config('floosak.bypass', false)) {
+            return DB::transaction(function () use ($attempt): FloosakPaymentAttempt {
+                $locked = FloosakPaymentAttempt::query()->whereKey($attempt->id)->lockForUpdate()->firstOrFail();
+                $locked->update([
+                    'status' => FloosakPaymentAttempt::STATUS_COMPLETED,
+                    'gateway_transaction_id' => $locked->gateway_transaction_id ?: 'BYPASS-C-' . strtoupper(Str::random(10)),
+                    'gateway_status_en' => 'Completed',
+                    'gateway_status_ar' => 'مكتمل (تجاوز)',
+                    'completed_at' => now(),
+                ]);
+                $this->markOrderPaid($locked);
+
+                return $locked->fresh();
+            });
+        }
+
         if ((int) $attempt->user_id !== (int) $user->id) {
             throw new FloosakPaymentException('لا يمكن تأكيد عملية دفع لا تخص المستخدم الحالي.', 403);
         }
@@ -106,6 +154,8 @@ class FloosakPaymentService
 
             return $locked;
         });
+
+
 
         try {
             $response = $this->client->confirmPayment($attempt->gateway_purchase_id, $otp);
@@ -448,6 +498,10 @@ class FloosakPaymentService
 
     private function ensureConfigured(): void
     {
+        if (config('floosak.bypass', false)) {
+            return;
+        }
+
         if (!config('floosak.enabled')) {
             throw new FloosakPaymentException('بوابة فلوسك غير مفعلة حالياً.', 503);
         }

@@ -19,8 +19,8 @@ class DashboardController extends Controller
         $activeStoresCount = Store::where('is_active', true)->count();
 
         // ##### الكود المضاف #####
-        // 3. حساب عدد العملاء (المستخدمين الذين ليس لديهم أي دور)
-        $customerCount = User::whereDoesntHave('roles')->count();
+        // 3. حساب عدد العملاء (المستخدمين الذين لديهم دور عميل)
+        $customerCount = User::role('customer')->count();
 
         // 4. Products Count
         $productCount = \App\Models\Product::count();
@@ -52,7 +52,7 @@ class DashboardController extends Controller
         // 16. Payment Management (Count of paid orders)
         $paymentCount = \App\Models\Order::where('payment_status', 'paid')->count();
         // 17. Customer Analysis (New Customers this month)
-        $newCustomersCount = User::whereDoesntHave('roles')->where('created_at', '>=', now()->subDays(30))->count();
+        $newCustomersCount = User::role('customer')->where('created_at', '>=', now()->subDays(30))->count();
 
         // 18. Categories Count (Root Categories only)
         $categoriesCount = \App\Models\Category::whereNull('parent_id')->count();

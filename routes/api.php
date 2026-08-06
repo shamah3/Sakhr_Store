@@ -42,6 +42,9 @@ Route::prefix('v1')->group(function () {
     // 3. جلب جميع المنتجات
     Route::get('/products', [ProductController::class, 'index']);
 
+    // بحث ذكي للمنتجات والتطبيق
+    Route::post('/search/smart', [\App\Http\Controllers\Api\v1\AiSearchController::class, 'search']);
+
     // 4. جلب المنتجات الأكثر طلبًا
     Route::get('/products/top-selling', [ProductController::class, 'topSelling']);
 
@@ -75,16 +78,22 @@ Route::prefix('v1')->group(function () {
     // 9. استقبال إشعارات العملاء
     Route::post('/notifications', [NotificationController::class, 'store']);
 
-    // 10. استقبال بيانات العملاء (تسجيل جديد)
+    // 10. استقبال بيانات العملاء (تسجيل جديد وجلب البيانات)
     Route::post('/customers', [CustomerController::class, 'register']);
+    Route::get('/customers/fetch', [CustomerController::class, 'fetchCustomer']);
 
-    // 11. إرسال وتأكيد رمز التحقق (OTP)
+    // 11. إرسال وتأكيد رمز التحقق (OTP) والدخول بالبصمة
     Route::prefix('auth')->group(function () {
         // إرسال كود التحقق
         Route::post('/send-code', [AuthController::class, 'sendCode']);
         // التأكد من كود التحقق
         Route::post('/verify-code', [AuthController::class, 'verifyCode']);
+        // الدخول عبر البصمة (Login via Fingerprint)
+        Route::post('/biometric-login', [AuthController::class, 'biometricLogin']);
     });
+
+    // تسجيل الدخول بكلمة المرور
+    Route::post('/login', [AuthController::class, 'login']);
 
     /* -------------------------------------------------------------------------- */
     /* التكملة المطلوبة (12-23) */
@@ -97,14 +106,10 @@ Route::prefix('v1')->group(function () {
     Route::get('/payment-methods', [PaymentController::class, 'index']);
 
     // 14. استقبال الطلبات وتتبعها
-    Route::post('/orders', [OrderController::class, 'store']);
     Route::get('/orders/{id}', [OrderController::class, 'show']);
 
     // 15. استقبال سجل أنشطة العملاء
     Route::post('/customer-activities', [ActivityController::class, 'store']);
-
-    // 16. استقبال المنتجات المسترجعة
-    Route::post('/returns', [ReturnController::class, 'store']);
 
     // 17. استقبال وجلب تقييمات المنتجات
     Route::post('/product-reviews', [ReviewController::class, 'storeProductReview']);
@@ -123,10 +128,17 @@ Route::prefix('v1')->group(function () {
     // 21. استقبال الرسائل الخاصة بالتجار
     Route::post('/messages', [MessageController::class, 'store']);
 
-    // 22. تغيير كلمة المرور و 23. تسجيل الخروج (محمي بـ Sanctum)
+    // 22. المسارات المحمية بـ Sanctum
     Route::middleware('auth:sanctum')->group(function () {
+        Route::get('/auth/profile', [AuthController::class, 'profile']);
+        Route::get('/auth/me', [AuthController::class, 'me']);
+        Route::put('/auth/profile', [AuthController::class, 'updateProfile']);
+        Route::post('/auth/profile/image', [AuthController::class, 'uploadProfileImage']);
+        Route::post('/auth/enable-biometric', [AuthController::class, 'enableBiometric']);
         Route::post('/auth/change-password', [AuthController::class, 'changePassword']);
-        Route::post('/auth/logout', [AuthController::class, 'logout']); // مسار تسجيل الخروج الجديد
+        Route::post('/auth/logout', [AuthController::class, 'logout']);
+        Route::post('/orders', [OrderController::class, 'store']);
+        Route::post('/returns', [ReturnController::class, 'store']);
 
         Route::post('/orders/{order}/payments/floosak/initiate', [FloosakPaymentController::class, 'initiate']);
         Route::post('/payments/floosak/{attempt}/confirm', [FloosakPaymentController::class, 'confirm']);
@@ -137,6 +149,9 @@ Route::prefix('v1')->group(function () {
             Route::get('/orders', [\App\Http\Controllers\Api\v1\DriverController::class, 'index']);
             Route::post('/orders/{id}/update-status', [\App\Http\Controllers\Api\v1\DriverController::class, 'updateStatus']);
         });
+
+        // مسارات الشات بوت (Chatbot Routes)
+        Route::get('/chatbot/history', [ChatbotController::class, 'history']);
     });
 
     /* -------------------------------------------------------------------------- */
@@ -149,7 +164,7 @@ Route::prefix('v1')->group(function () {
 });
 
 // مسار تسجيل الدخول العام تطبيق المندوب وغيرها
-Route::post('/login', [App\Http\Controllers\Api\v1\AuthController::class, 'login']);
+
 
 // مسار متوافق مع تطبيق السي شارب (Compatibility Route)
 Route::post('/sync-inventory', [App\Http\Controllers\Api\v1\InventoryController::class, 'syncProducts']);
